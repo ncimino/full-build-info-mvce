@@ -2,11 +2,12 @@ plugins {
     id 'cpp-application'
     id 'cpp-unit-test'
     id 'maven-publish'
+    id 'com.jfrog.artifactory' version '4.24.16'
 }
 
-version = "6.5.4"
+project.ext.buildNumber = '11'
+version = "6.5.4-${project.buildNumber}"
 group =  'com.company'
-
 
 repositories {
     maven {
@@ -23,13 +24,80 @@ publishing {
     }
 }
 
-afterEvaluate {
-    configurations.forEach {
-        logger.info("Config: " + it);
-    }
-}
+//afterEvaluate { configurations.forEach {logger.info(it) } }
 
 dependencies {
     implementation "com.company:utilities:6.5.4"
 }
 
+project.ext.artPublications = new ArrayList<Publication>()
+void addPublicationsForBuildInfo(Project project) {
+    publishing.getPublications().each {project.artPublications.add(it)}
+    def artifactoryPublish = null
+    for (Task task : project.getTasksByName("artifactoryPublish", false)) {
+        assert (artifactoryPublish == null) : "Expect there to be only one 'artifactoryPublish' task, but for some reason we found multiples!"
+        artifactoryPublish = task
+    }
+    if (artifactoryPublish != null) {
+        project.artPublications.each {artifactoryPublish.publications(it)}
+        def propsString = "build.name=" + project.rootProject.name + ";build.number=" + project.buildNumber
+        def propPairs = propsString.split(";")
+        propPairs.each {
+            def prop = it.split("=", 2);
+            artifactoryPublish.getProperties().put(prop[0], prop[1]);
+        }
+    }
+}
+
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration
+import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil
+import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention
+
+import java.util.stream.Collectors
+
+void addDefaultArtifactoryConfig(Project project) {
+    //if (project.getRootProject() != project) { return } // only for root project...
+    def artUrl = project.properties.getOrDefault("url", "https://localhost/artifactory")
+    def artRepo = project.properties.getOrDefault("repo", "libs-release")
+    def artUser = project.properties.getOrDefault("user", "admin")
+    def artPass = project.properties.getOrDefault("password", "password")
+
+    ArtifactoryPluginConvention convention = ArtifactoryPluginUtil.getArtifactoryConvention(project);
+    convention.setContextUrl(artUrl);
+    ArtifactoryClientConfiguration acc = convention.getClientConfig();
+
+    if (acc != null) {
+        def publicationList = project.artPublications.stream()
+                .map(object -> Objects.toString(object, null))
+                .collect(Collectors.toList());
+        def publications = String.join(",", publicationList);
+        // If this is set after the taskGraph, then the publications won't connect up correctly
+        // However, some projects won't have all publications available even after
+        acc.publisher.setPublications(publications);
+        acc.resolver.setRepoKey(artRepo);
+        acc.resolver.setPassword(artPass);
+        acc.resolver.setUsername(artUser);
+
+        acc.publisher.setContextUrl(artUrl.toString());
+        acc.publisher.setRepoKey(artRepo);
+        acc.publisher.setPassword(artPass);
+        acc.publisher.setUsername(artUser);
+        acc.publisher.setPublishArtifacts(true);
+        acc.publisher.setPublishBuildInfo(true);
+        acc.publisher.setMaven(true);
+
+        acc.info.setBuildName(project.rootProject.name)
+        acc.info.setBuildNumber(project.buildNumber)
+//        acc.info.setBuildTimestamp(String.valueOf());
+        acc.setTimeoutSec(600);
+        acc.setIncludeEnvVars(true);
+        acc.setEnvVarsExcludePatterns("*password*,*secret*");
+    }
+}
+
+project.getPluginManager().withPlugin("com.jfrog.artifactory") {
+    project.afterEvaluate {
+        addPublicationsForBuildInfo(it)
+        addDefaultArtifactoryConfig(it)
+    }
+}

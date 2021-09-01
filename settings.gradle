@@ -1,4 +1,4 @@
-rootProject.name = 'mvce'
+rootProject.name = 'full-build-info-mvce'
 include 'app'
 include 'utilities'
 include 'list'
