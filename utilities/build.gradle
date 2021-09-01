@@ -1,0 +1,36 @@
+plugins {
+    id 'cpp-library'
+    id 'maven-publish'
+}
+
+version = "6.5.4"
+group =  'com.company'
+
+library {
+    dependencies {
+        api "com.company:list:3.2.1"
+    }
+}
+
+repositories {
+    maven {
+        url "../test-repo"
+    }
+}
+
+publishing {
+    repositories {
+        maven {
+            name "local"
+            url "../test-repo"
+        }
+    }
+}
+
+afterEvaluate { // the optimized flag is false even for compileReleaseCpp up until afterEvaluate... bug?
+    tasks.withType(CppCompile).configureEach {
+        if (!it.optimized) {
+            macros.put("NDEBUG", null)
+        }
+    }
+}

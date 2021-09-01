@@ -1,0 +1,35 @@
+plugins {
+    id 'cpp-application'
+    id 'cpp-unit-test'
+    id 'maven-publish'
+}
+
+version = "6.5.4"
+group =  'com.company'
+
+
+repositories {
+    maven {
+        url "../test-repo"
+    }
+}
+
+publishing {
+    repositories {
+        maven {
+            name "local"
+            url "../test-repo"
+        }
+    }
+}
+
+afterEvaluate {
+    configurations.forEach {
+        logger.info("Config: " + it);
+    }
+}
+
+dependencies {
+    implementation "com.company:utilities:6.5.4"
+}
+
