@@ -1,0 +1,4 @@
+rootProject.name = 'mvce'
+include 'app'
+include 'utilities'
+include 'list'
