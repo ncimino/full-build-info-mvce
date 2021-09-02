@@ -27,8 +27,8 @@ publishing {
 //afterEvaluate { configurations.forEach {logger.info(it) } }
 
 dependencies {
-    implementation project(':utilities')
-    //implementation 'com.company:utilities:6.5.4'
+//    implementation project(':utilities')
+    implementation 'com.company:utilities:6.5.4'
 }
 
 project.ext.artPublications = new ArrayList<Publication>()

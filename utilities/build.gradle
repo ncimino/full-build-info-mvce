@@ -8,8 +8,8 @@ group 'com.company'
 
 library {
     dependencies {
-        api project(':list')
-//        api "com.company:list:3.2.1"
+//        api project(':list')
+        api "com.company:list:3.2.1"
     }
 }
 
