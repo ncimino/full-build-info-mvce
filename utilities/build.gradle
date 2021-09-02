@@ -3,12 +3,13 @@ plugins {
     id 'maven-publish'
 }
 
-version = "6.5.4"
-group =  'com.company'
+version '6.5.4'
+group 'com.company'
 
 library {
     dependencies {
-        api "com.company:list:3.2.1"
+        api project(':list')
+//        api "com.company:list:3.2.1"
     }
 }
 

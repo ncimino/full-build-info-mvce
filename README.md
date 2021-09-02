@@ -5,15 +5,28 @@ Artifactory plugin.
 
 # Building 
 
-There are dependent projects, so go ahead and build those first:
+The artifacts for the `app`, `list`, and `utilities` projects publish to the
+`local` repo:
 
-    ./gradlew -p ./list/ publishAllPublicationsToLocalRepo
-    ./gradlew -p ./utilities/ publishAllPublicationsToLocalRepo
+    ./test-repo
+
+The project is setup with a multi-project setup so that all of these modules can be
+published via pull through of:
+
+    ./gradlew artifactoryPublish
+
+_NOTE: Due to the fact that this creates project dependencies vs module dependencies it is 
+reported differently_
+
+If you want to publish the individual projects, then checkout the `separate` branch:
+
+    git checkout separate
+    ./gradlew :list:publishAllPublicationsToLocalRepo
+    ./gradlew :utilities:publishAllPublicationsToLocalRepo
 
 Then publish the project that has a transitive dependency:
 
-    ./gradlew -p ./app/ publishAllPublicationsToLocalRepo
-
+    ./gradlew artifactoryPublish
 
 # Debug
 
@@ -23,7 +36,7 @@ To list the configurations add:
 
 Then run:
 
-    $ gw -p ./app/ clean assemble --info
+    $ ./gradlew -p ./app/ clean assemble --info
 
     configuration ':cppCompileDebug'
     configuration ':cppCompileRelease'
